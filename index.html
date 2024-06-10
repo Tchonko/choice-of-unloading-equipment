@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Choice of unloading equipment</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-image: url(mining.jpg);
+            margin: 20px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        form {
+            max-width: 400px;
+            margin: auto;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            cursor: pointer;
+        }
+
+            button:hover {
+                background-color: #45a049;
+            }
+
+        #result {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+
+        .error {
+            color: red;
+            display: none;
+        }
+
+        .description {
+            font-size: 0.9em;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+
+
+    <h1>Choice of unloading equipment</h1>
+    <form id="choiceUnloadingForm">
+
+        <label for="volume">Total volume of ore to be transported (in m&sup3):</label>
+        <input type="number" id="volume" name="volume" min="0.1" step="0.1" required>
+        <span id="volumeError" class="error">Please enter a strictly positive number.</span>
+        <br><br>
+
+        <label for="density">Ore density (in t/m&sup3):</label>
+        <input type="number" id="density" name="density" min="0.01" step="0.01" required>
+        <span id="densityError" class="error">Please enter a strictly positive number.</span>
+        <br><br>
+
+        <label for="height">Bench height (in meters):</label>
+        <input type="number" id="height" name="height" min="0.01" step="0.01" required>
+        <span id="heightError" class="error">Please enter a strictly positive number.</span>
+        <br><br>
+
+        <label for="width">Bench width (in meters):</label>
+        <input type="number" id="width" name="width" min="0.01" step="0.01" required>
+        <span id="widthError" class="error">Please enter a strictly positive number.</span>
+        <br><br>
+
+        <label for="capacity">Bucket capacity (in m&sup3):</label>
+        <input type="number" id="capacity" name="truck_downtime" min="0.01" step="0.01" required>
+        <span id="capacityError" class="error">Please enter a strictly positive number.</span>
+        <br><br>
+
+        <label for="power">Power (in kW):</label>
+        <input type="number" id="power" name="power" min="0.1" step="0.1" required>
+        <span id="powerError" class="error">Please enter a strictly positive number.</span>
+        <br><br>
+
+        <label for="expenses">Operating expenses (in euros/h):</label>
+        <input type="number" id="expenses" name="expenses" min="0.1" step="0.1" required>
+        <span id="expensesError" class="error">Please enter a strictly positive number.</span>
+        <br><br>
+
+        <button type="button" onclick={submitForm()}>Submit</button>
+
+    </form>
+
+
+    <div id="result"></div>
+
+    <script>
+         const fields = [
+            { id: 'volume', errorId: 'volumeError'},
+            { id: 'density', errorId: 'densityError'},
+            { id: 'height', errorId: 'heightError'},
+            { id: 'width', errorId: 'widthError'},
+            { id: 'capacity', errorId: 'capacityError'},
+            { id: 'power', errorId: 'powerError' },
+            { id: 'expenses', errorId: 'expensesError' }
+        ];
+
+        function validateInput(event) {
+            const input = event.target;
+            const error = document.getElementById(input.dataset.errorId);
+            if (input.value <= 0) {
+                error.style.display = 'inline';
+            } else {
+                error.style.display = 'none';
+            }
+        }
+
+        fields.forEach(field => {
+            const input = document.getElementById(field.id);
+            input.dataset.errorId = field.errorId;
+            input.addEventListener('input', validateInput);
+        });
+
+        function validateForm() {
+            let isValid = true;
+
+            fields.forEach(field => {
+                const input = document.getElementById(field.id);
+                const error = document.getElementById(field.errorId);
+                if (input.value <= 0) {
+                    error.style.display = 'inline';
+                    isValid = false;
+                } else {
+                    error.style.display = 'none';
+                }
+            });
+
+            return isValid;
+        }
+
+
+        function submitForm() {
+            const resultDiv = document.getElementById('result');
+            if (validateForm()) {
+                const volume = parseFloat(document.getElementById('volume').value);
+                const density = parseFloat(document.getElementById('density').value);
+                const height = parseFloat(document.getElementById('height').value);
+                const width = parseFloat(document.getElementById('width').value);
+                const capacity = parseFloat(document.getElementById('capacity').value);
+                const power = parseFloat(document.getElementById('power').value);
+                const expenses = parseFloat(document.getElementById('expenses').value);
+
+
+                // Calculating the weight of ore to be transported
+                const weight_transported_ore = volume * density;
+
+                // Calculating the number of buckets required
+                const number_of_required_buckets = Math.floor(weight_transported_ore / capacity) + 1;
+
+                // Calculating loading time
+                const loading_time = number_of_required_buckets * (height + width) / power;
+
+                // Calculation of operating costs
+                const operating_costs = loading_time * expenses;
+
+
+                resultDiv.innerHTML = ` Weight of ore to be transported: ${weight_transported_ore} tons <br>
+                                        Number of buckets required: ${number_of_required_buckets} buckets <br>
+                                        Loading time: ${loading_time} h <br>
+                                        Operating costs: ${operating_costs} euros`;
+                // Your custom function logic here
+            } else {
+                resultDiv.innerHTML = "Form data is invalid. Please correct the errors and try again.";
+            }
+        }
+
+        document.getElementById('truckForm').addEventListener('submit', function(event) {
+            if (!validateForm()) {
+                event.preventDefault();
+            }
+        });
+    </script>
+
+</body>
+</html>
